@@ -3,7 +3,9 @@ export default function taskBlock(trueOrFalse) {
   const task2 = true;
 
   if (trueOrFalse) {
+    // bo shadow
     const task = true;
+    // no shadow
     const task2 = false;
   }
 
