@@ -3,9 +3,9 @@ export default function taskBlock(trueOrFalse) {
   const task2 = true;
 
   if (trueOrFalse) {
-    // bo shadow
+    // eslint
     const task = true;
-    // no shadow
+    // eslint
     const task2 = false;
   }
 
