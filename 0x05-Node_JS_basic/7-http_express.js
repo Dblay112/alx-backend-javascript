@@ -1,40 +1,71 @@
 const express = require('express');
 const fs = require('fs');
+
 const app = express();
+const port = 1245;
+const path = process.argv.length > 2 ? process.argv[2] : '';
+
+function countStudents(path) {
+  return new Promise((resolve, reject) => {
+    if (!path) {
+      reject(new Error('Cannot load the database'));
+    }
+
+    fs.readFile(path, 'utf-8', (err, data) => {
+      if (err) {
+        reject(new Error('Cannot load the database'));
+        return;
+      }
+
+      const lines = data.toString().trim().split('\n').slice(1);
+
+      let count = 0;
+
+      const fields = {};
+
+      lines.forEach((line) => {
+        count += 1;
+
+        const studentRecord = line.split(',');
+
+        if (!(studentRecord[3] in fields)) fields[studentRecord[3]] = [];
+
+        fields[studentRecord[3]].push(studentRecord[0]);
+      });
+      let result = `Number of students: ${count}\n`;
+
+      for (const field in fields) {
+        if (Object.hasOwn(fields, field)) {
+          result += `Number of students in ${field}: ${fields[field].length}. List: ${fields[field].join(', ')}\n`;
+        }
+      }
+      result = result.trim();
+
+      resolve(result);
+    });
+  });
+}
 
 app.get('/', (req, res) => {
-  res.set('Content-Type', 'text/plain');
   res.send('Hello Holberton School!');
 });
 
-app.get('/students', (req, res) => {
-  res.set('Content-Type', 'text/plain');
-  res.write('This is the list of our students\n');
-  fs.readFile(__dirname + '/database.csv', 'utf8', (err, data) => {
-    if (err) {
-      throw Error('Cannot load the database');
-    }
-    const result = [];
-    data.split('\n').forEach((data) => {
-      result.push(data.split(','));
+app.get('/students', async (req, res) => {
+  let responseMessage = 'This is the list of our students\n';
+
+  await countStudents(path)
+    .then((result) => {
+      responseMessage += result;
+    })
+    .catch(() => {
+      responseMessage = 'This is the list of our students\nCannot load the database';
     });
-    result.shift();
-    const newis = [];
-    result.forEach((data) => newis.push([data[0], data[3]]));
-    const fields = new Set();
-    newis.forEach((item) => fields.add(item[1]));
-    const final = {};
-    fields.forEach((data) => { (final[data] = 0); });
-    newis.forEach((data) => { (final[data[1]] += 1); });
-    res.write(`Number of students: ${result.filter((check) => check.length > 3).length}\n`);
-    Object.keys(final).forEach((data) => res.write(`Number of students in ${data}: ${final[data]}. List: ${newis.filter((n) => n[1] === data).map((n) => n[0]).join(', ')}\n`));
-    res.end();
-  });
+
+  res.send(responseMessage);
 });
 
-app.listen(1245, () => {
-  console.log('Server running at http://localhost:1245/');
+app.listen(port, () => {
+  console.log(`Server listening on port ${port}`);
 });
 
 module.exports = app;
-
